@@ -4,6 +4,7 @@ import urequests as requests
 
 headers = { "Content-Type": "application/json" }
 loop = asyncio.get_event_loop()
+two56_kb = 256.0 * 1024.0
 
 def read_temp_sensor():
     roms = ds_sensor.scan()
@@ -39,10 +40,12 @@ async def serve_client(reader, writer):
     if "/metrics" in str(request_line):
         temperature = get_temperature()
         body = '# HELP Temperature temperature of the garden.\r\n# TYPE temperature gauge\n'
-        body += 'temperature{deviceTitle="Garden Temperature"} ' + str(temperature)
+        body += 'temperature{deviceTitle="Garden Pico"} ' + str(temperature)
         moisture = get_soil_moisture()
         body += '\n# HELP Moisture moisture of the garden soil.\r\n# TYPE moisture gauge\n'
-        body += 'moisture{deviceTitle="Garden Moisture"} ' + str(moisture)
+        body += 'moisture{deviceTitle="Garden Pico"} ' + str(moisture)
+        body += '\n# HELP Memory_Used memory used of the pico.\r\n# TYPE memory_used gauge\n'
+        body += 'memory_used{deviceTitle="Garden Pico"} ' + str((gc.mem_alloc() / (two56_kb)) * 100.0)
         writer.write('HTTP/1.0 200 OK\r\nContent-type: text\r\n\r\n')
     else:
         body = {}
