@@ -31,6 +31,12 @@ def get_temperature():
     far = round(temp * (9/5) + 32.0, 2)
     return far
 
+def get_battery_stats():
+    percent = f"{max17.cell_percent:.2f}"
+    voltage = f"{max17.cell_voltage:.2f}"
+    rate = f"{max17.charge_rate:.2f}"
+    return (percent, voltage, rate)
+
 async def serve_client(reader, writer):
     request_line = await reader.readline()
     # We are not interested in HTTP request headers, skip them
@@ -46,6 +52,13 @@ async def serve_client(reader, writer):
         body += 'moisture{deviceTitle="Garden Pico"} ' + str(moisture)
         body += '\n# HELP Memory_Used memory used of the pico.\r\n# TYPE memory_used gauge\n'
         body += 'memory_used{deviceTitle="Garden Pico"} ' + str((gc.mem_alloc() / (two56_kb)) * 100.0)
+        battery_stats = get_battery_stats()
+        body += '\n# HELP Battery_Charge Charge percent remaining of the LiPo Battery.\r\n# TYPE battery_charge gauge\n'
+        body += 'battery_charge{deviceTitle="Garden Pico"} ' + battery_stats[0]
+        body += '\n# HELP Battery_Voltage LiPo Battery Voltage.\r\n# TYPE battery_voltage gauge\n'
+        body += 'battery_voltage{deviceTitle="Garden Pico"} ' + battery_stats[1]
+        body += '\n# HELP Battery_Charge_Rate Charge or Discharge Rate of the LiPo Battery.\r\n# TYPE battery_charge_rate gauge\n'
+        body += 'battery_charge_rate{deviceTitle="Garden Pico"} ' + battery_stats[2]
         writer.write('HTTP/1.0 200 OK\r\nContent-type: text\r\n\r\n')
     else:
         body = {}
@@ -55,7 +68,7 @@ async def serve_client(reader, writer):
         elif "/moisture" in str(request_line):
             body = get_soil_moisture()
         else:
-            body = {"temperature" : get_temperature(), "moisture": get_soil_moisture() }
+            body = {"temperature" : get_temperature(), "moisture": get_soil_moisture(), "battery": f"{max17.cell_percent:.1f} %"}
         body = json.dumps(body)
         writer.write('HTTP/1.0 200 OK\r\nContent-type: application/json\r\n\r\n')
     writer.write(body)
@@ -69,9 +82,11 @@ async def main():
     asyncio.create_task(asyncio.start_server(serve_client, "0.0.0.0", 80))
     print('You can now connect!')
     while True:
-        await asyncio.sleep(3600)
+        await asyncio.sleep(5)
+        print(max17.hibernating)
         
 try:
     asyncio.run(main())
 finally:
     asyncio.new_event_loop()
+

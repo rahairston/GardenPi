@@ -8,6 +8,9 @@ from machine import Pin, ADC
 import onewire, ds18x20
 import network
 import gc
+import busio
+import board
+import adafruit_max1704x
 
 gc.collect()
 gc.threshold(10240)
@@ -18,7 +21,13 @@ m_power = Pin(27, mode=Pin.OUT, value=0)
 ds_pin = Pin(22)
 ds_sensor = ds18x20.DS18X20(onewire.OneWire(ds_pin))
 
-network.hostname("gardenpi")
+i2c = busio.I2C(board.GP1, board.GP0)  # uses board.SCL and board.SDA
+max17 = adafruit_max1704x.MAX17048(i2c)
+max17.comparator_disabled = True
+max17.quick_start = True
+max17.hibernate()
+
+network.hostname("weatherpi")
 ssid = '<redacted>'
 password = '<redacted>'
 
