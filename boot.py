@@ -4,7 +4,7 @@ except:
   import socket
   
 from time import sleep, sleep_ms
-from machine import Pin, ADC
+from machine import Pin, ADC, I2C
 import onewire, ds18x20
 import network
 import gc
@@ -13,7 +13,6 @@ import board
 import adafruit_max1704x
 
 gc.collect()
-gc.threshold(10240)
 
 m_pin = ADC(28)
 m_power = Pin(27, mode=Pin.OUT, value=0)
@@ -34,7 +33,6 @@ password = '<redacted>'
 wlan = network.WLAN(network.STA_IF)
 
 wlan.active(True)
-wlan.config(pm = 0xa11140)  # Disable power-save mode
 wlan.connect(ssid, password)
 
 max_wait = 10
@@ -52,4 +50,3 @@ else:
     status = wlan.ifconfig()
     sleep(1)
     print('ip = ' + status[0])
-

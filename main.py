@@ -75,6 +75,7 @@ async def serve_client(reader, writer):
 
     await writer.drain()
     await writer.wait_closed()
+    gc.collect()
 
 # While I don't need async for this case, if I ever repurpose this it might be nice
 async def main():
@@ -82,11 +83,11 @@ async def main():
     asyncio.create_task(asyncio.start_server(serve_client, "0.0.0.0", 80))
     print('You can now connect!')
     while True:
-        await asyncio.sleep(5)
-        print(max17.hibernating)
+        await asyncio.sleep(3600)
         
 try:
     asyncio.run(main())
 finally:
     asyncio.new_event_loop()
+
 
